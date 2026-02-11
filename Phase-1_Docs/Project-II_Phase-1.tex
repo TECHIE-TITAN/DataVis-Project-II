@@ -1,0 +1,203 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.6in]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% Reduce spacing
+\setlength{\parskip}{3pt}
+\setlist{nosep, leftmargin=3em}
+\titlespacing*{\section}{0pt}{8pt}{4pt}
+\titlespacing*{\subsection}{0pt}{6pt}{3pt}
+
+\title{\vspace{-1.5cm}\textbf{Project-II Phase-1}}
+\author{Vansh Goyal: 2024101044, Poojitha J: 2024101088, Arushi Tandon: 2024111024}
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace{-1cm}
+
+\section*{Dataset Description}
+This dataset contains geographic, demographic, policy-based and termination data of auto-insurance customers. Following are the attributes of this dataset:
+
+\begin{itemize}[itemsep=1pt]
+    \item \textbf{INDIVIDUAL\_ID}: Unique ID for a specific insurance customer
+    \item \textbf{CURR\_ANN\_AMT}: The Annual dollar value paid by the customer. It is not the policy amount. It is the actual amount the customer paid during the previous year.
+    \item \textbf{DAYS\_TENURE}: The time in days an individual has been a customer with the insurance agency.
+    \item \textbf{CUST\_ORIG\_DATE}: The date the individual became a customer
+    \item \textbf{AGE\_IN\_YEARS}: Age of the individual
+    \item \textbf{INCOME}: Estimated Income for the household associated with the individual
+    \item \textbf{HAS\_CHILDREN}: Flag, 1 indicates the individual has children in the home, 0 otherwise
+    \item \textbf{LENGTH\_OF\_RESIDENCE}: Estimated number of years the individual has lived in their current home
+    \item \textbf{MARITAL\_STATUS}: Married or Single.
+    \item \textbf{HOME\_MARKET\_VALUE}: Estimated value of home.
+    \item \textbf{HOME\_OWNER}: Flag, 1 individual owns primary home, 0 otherwise
+    \item \textbf{COLLEGE\_DEGREE}: Flag, 1 individual has a college degree or more, 0 otherwise
+    \item \textbf{GOOD\_CREDIT}: Flag, 1 individual has FICO greater than 630, 0 otherwise
+    \item \textbf{ACCT\_SUSPD\_DATE}: Date of termination
+\end{itemize}
+
+\section*{Users}
+\begin{itemize}[itemsep=1pt]
+    \item \textbf{Insurance Data Analysts}: Analyze churn trends across various attributes
+    \item \textbf{Customer Retention \& CRM Teams}: Identify high-risk customers, Design retention strategies.
+    \item \textbf{Pricing \& Underwriting Teams}: Study the relationship between income, credit quality, home ownership, and churn to refine premium and risk models.
+    \item \textbf{Regional Operations Managers}: Evaluate geographic variations in churn.
+    \item \textbf{Product \& Policy Design Teams}: Improve insurance offerings based on customer behavior
+    \item \textbf{Business Strategists \& Executives}: Decide on market prioritization and long-term growth.
+\end{itemize}
+
+\section*{Tasks}
+\begin{itemize}[itemsep=1pt]
+    \item \textbf{Discover clusters}: Finding churn hotspots financially and geographically
+    \item \textbf{Compare dependency}: Compare churn hotspots with home-ownership distribution to assess financial stability correlation
+    \item \textbf{Assess correlation}: Assess correlation between churn density and credit quality to distinguish stress-driven vs interest-driven churn
+    \item \textbf{Compare Trends}: Compare churn trends across age for different family structures
+    \item \textbf{Correlate Relations}: Among age, income, marital status, and churn
+    \item \textbf{Compare Compositions}: Compare demographic composition of churners across tenure stages
+    \item \textbf{Locate Clusters}: Locate spatial clusters of high churn density.
+    \item \textbf{Compare Spatial-Temporal}: Compare spatial churn intensity with tenure distribution to assess persistence after controlling for loyalty.
+    \item \textbf{Correlate Dependency}: Correlate regional churn rates with composite financial stability to identify stress-driven spatial churn.
+\end{itemize}
+
+\section*{Questions}
+
+\subsection*{Q1. Among the churned customers, was the reason for churning financial instability, low loyalty or simply loss of interest?}
+
+\textbf{Why visualization?} Churn depends on the combined effects of tenure, income, and financial stability, which are difficult to interpret from tables alone. Aligned heatmaps enable quick visual comparison to see whether churn hotspots align with financial vulnerability or persist despite stability, distinguishing stress-driven churn from low-loyalty or interest-based churn.
+
+\textbf{Heatmap 1: Churn Density Map}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: Locate churn hotspots.
+    \item Marks: Rectangles
+    \item Channels: 
+    \begin{itemize}[itemsep=0pt]
+        \item X-Position: DAYS\_TENURE (Buckets Low to High)
+        \item Y-Position: INCOME (Buckets Low to High)
+        \item Color: Churn Density (Green to Red for Low Density to High Density)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Heatmap 2: Home Ownership Map}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: To check whether high-churn regions correspond to economically insecure customers.
+    \item Marks: Rectangles
+    \item Channels: 
+    \begin{itemize}[itemsep=0pt]
+        \item X-Position: DAYS\_TENURE (Buckets Low to High)
+        \item Y-Position: INCOME (Buckets Low to High)
+        \item Color: \% of HOME\_OWNER=1 (Light to Dark)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Heatmap 3: Credit Quality Map}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: To see if churn clusters align with poor credit health. Low credit in high-churn cells - stress-driven churn. High credit in high-churn cells - interest-driven churn.
+    \item Marks: Rectangles
+    \item Channels: 
+    \begin{itemize}[itemsep=0pt]
+        \item X-Position: DAYS\_TENURE (Buckets Low to High)
+        \item Y-Position: INCOME (Buckets Low to High)
+        \item Color: \% of GOOD\_CREDIT=1 (Light to Dark)
+    \end{itemize}
+\end{itemize}
+
+\textbf{Heatmap 4: Home Market Value Map}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: To check wealth level beyond income.
+    \item Marks: Rectangles
+    \item Channels: 
+    \begin{itemize}[itemsep=0pt]
+        \item X-Position: DAYS\_TENURE (Buckets Low to High)
+        \item Y-Position: INCOME (Buckets Low to High)
+        \item Color: Avg HOME\_MARKET\_VALUE (Light to Dark)
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Q2. Which specific demographic profiles (Age Groups, Marital Status, Family Size) are most volatile and likely to churn, and does having a family (children + marriage) effectively reduce this risk?}
+
+\textbf{Why visualization?} Churn varies across age, family structure, income, and tenure at the same time, which is hard to capture using raw data alone. Visualizations reveal life-stage churn patterns and show whether marriage or having children reduces churn risk, enabling quick identification of volatile demographic groups.
+
+\textbf{Multi-Line Chart: The "Lifecycle Volatility" Curve}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: To compare the churn trajectory of four distinct family structures.
+    \item Marks: Lines with Point Markers.
+    \item Channels:
+    \begin{itemize}[itemsep=0pt]
+        \item X-Position: AGE\_GROUP
+        \item Y-Position: AVERAGE\_CHURN\_RATE (0\% to 100\%)
+        \item Color: Encodes the family Structure (Dark Red: Single-NoKids, Light Red: Single-Kids, Dark Blue: Married-NoKids, Light Blue: Married-Kids).
+    \end{itemize}
+\end{itemize}
+
+\textbf{Bubble Chart: Financial Stability \& Age Bubble Chart}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: Analyze if higher income correlates with lower churn across different ages.
+    \item Marks: Circles
+    \item Channels:
+    \begin{itemize}[itemsep=0pt]
+        \item X-Position: AGE\_IN\_YEARS
+        \item Y-Position: AVERAGE\_CHURN\_RATE (0\% TO 100\%)
+        \item Size: Average Income (Larger bubbles = Higher Income).
+        \item Color: MARITAL\_STATUS (Red = Single, Blue = Married).
+    \end{itemize}
+\end{itemize}
+
+\textbf{Stacked Bar Chart: The "Risk Composition" Evolution}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: To analyze demographic shifts across tenure stages.
+    \item Marks: Stacked Bars (Rectangular Segments).
+    \item Channels:
+    \begin{itemize}[itemsep=0pt]
+        \item X-Position: DAYS\_TENURE 
+        \item Y-Position: \% of Total Churners 
+        \item Color: Encodes the Family Structure (Dark Red: Single-NoKids, Light Red: Single-Kids, Dark Blue: Married-NoKids, Light Blue: Married-Kids).
+    \end{itemize}
+\end{itemize}
+
+\subsection*{Q3. Are there geographic churn hotspots in auto insurance, and do these spatial patterns persist after accounting for customer tenure, financial status, and residential stability?}
+
+\textbf{Why visualization?} Geographic churn patterns involve spatial and multivariate relationships that are hard to interpret from tables alone. They clearly show where churn is concentrated and whether it persists after accounting for tenure and financial stability, enabling stakeholders to quickly compare regions and derive actionable insights.
+
+\textbf{Hexbin Map: Spatial Churn Hotspot Map}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: Detects dense geographic churn hotspots while avoiding overplotting.
+    \item Marks: Hexagonal bins
+    \item Channels:
+    \begin{itemize}[itemsep=0pt]
+        \item Position: Latitude × Longitude
+        \item Color: Churn Rate (\% of CHURN = 1)
+        \item Size: Number of customers in hexbin
+    \end{itemize}
+\end{itemize}
+
+\textbf{Gradient Map: Geographic Tenure–Churn Gradient Map}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: Check whether churn hotspots persist after accounting for customer loyalty.
+    \item Marks: Geographic regions (state / city aggregates)
+    \item Channels:
+    \begin{itemize}[itemsep=0pt]
+        \item Position: Latitude × Longitude
+        \item Color: Average DAYS\_TENURE
+        \item Opacity: Churn Rate
+    \end{itemize}
+\end{itemize}
+
+\textbf{Bubble Map: Financial Stress vs Geography Bubble Map}
+\begin{itemize}[itemsep=0pt]
+    \item Purpose: Identify whether geographic churn is driven by financial instability.
+    \item Marks: Circles (one per region)
+    \item Channels:
+    \begin{itemize}[itemsep=0pt]
+        \item Position: Latitude × Longitude
+        \item Size: Churn Rate
+        \item Color: Composite Financial Stability Index (Income + \% Home Owner + \% Good Credit)
+    \end{itemize}
+\end{itemize}
+
+\end{document}
