@@ -143,6 +143,32 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+
+        /* Q2 Line Chart Styles */
+        .line {
+            fill: none;
+            stroke-width: 3;
+        }
+
+        .dot {
+            stroke: #000;
+            stroke-width: 1;
+        }
+
+        .legend-text {
+            font-size: 12px;
+            fill: #e0e0e0;
+        }
+
+        .grid line {
+            stroke: #2a2a2a;
+            stroke-opacity: 0.7;
+            shape-rendering: crispEdges;
+        }
+
+        .grid path {
+            stroke-width: 0;
+        }
     </style>
 </head>
 
@@ -180,6 +206,33 @@
             </div>
         </div>
 
+        <div style="margin-top: 50px;" class="question-section">
+            <h3>Question-2: Demographic Volatility and Financial Stability</h3>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="chart-container">
+                <h3 class="chart-title">Map 1: Lifecycle Volatility Curve</h3>
+                <div id="q2-line-chart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <h3 class="chart-title">Map 2: Financial Stability & Age Bubble Chart</h3>
+                <div id="q2-bubble-chart"></div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Risk Composition Evolution (by Tenure)</h3>
+                <div id="risk-composition-chart"></div>
+            </div>
+        </div>
+
+
+        <script src="q2_data_loader.js"></script>
+        <script src="q2_line_chart.js"></script>
+        <script src="q2_bubble_chart.js"></script>
+        <script src="q2_stacked_bar.js"></script>
+
         <!-- Question 3 Section (Added) -->
         <div style="margin-top: 50px;" class="question-section">
             <h3>Question-3: Are there geographic churn hotspots in auto insurance, and do these spatial patterns persist
@@ -214,6 +267,8 @@
     <script src="heatmap2_homeowner.js"></script>
     <script src="heatmap3_credit.js"></script>
     <script src="heatmap4_homevalue.js"></script>
+
+    <!--Q2-->
 
     <!-- Q3 Requirements -->
     <script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
