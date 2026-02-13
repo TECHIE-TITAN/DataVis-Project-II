@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question 1: Financial Churn Analysis Dashboard</title>
+    <title>Customer Churn Analysis Dashboard</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         * {
@@ -113,7 +114,8 @@
             font-size: 11px;
         }
 
-        .axis line, .axis path {
+        .axis line,
+        .axis path {
             stroke: #404040;
         }
 
@@ -143,15 +145,17 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>Customer Churn Analysis</h1>
         </header>
 
+        <!-- Question 1 Section -->
         <div class="question-section">
-            <h3>Question-1: Among the churned customers, was the reason for churning financial instability, low
-loyalty or simply loss of interest?</h3>
+            <h3>Question-1: Among the churned customers, was the reason for churning financial instability, low loyalty
+                or simply loss of interest?</h3>
         </div>
 
         <div class="dashboard-grid">
@@ -175,13 +179,54 @@ loyalty or simply loss of interest?</h3>
                 <div id="chart4"></div>
             </div>
         </div>
+
+        <!-- Question 3 Section (Added) -->
+        <div style="margin-top: 50px;" class="question-section">
+            <h3>Question-3: Are there geographic churn hotspots in auto insurance, and do these spatial patterns persist
+                after accounting for customer tenure, financial status, and residential stability?</h3>
+        </div>
+
+        <!-- Vertical Layout for Q3 -->
+        <div class="dashboard-grid" style="grid-template-columns: 1fr; gap: 40px; max-width: 1000px; margin: 0 auto;">
+            <div class="chart-container" style="display: flex; flex-direction: column; align-items: center;">
+                <h3 class="chart-title" style="width: 100%; text-align: left;">Map 1: Spatial Churn Hotspot (Hexbin)
+                </h3>
+                <div id="q3-hexbin"></div>
+            </div>
+
+            <div class="chart-container" style="display: flex; flex-direction: column; align-items: center;">
+                <h3 class="chart-title" style="width: 100%; text-align: left;">Map 2: Tenure-Churn Gradient</h3>
+                <div id="q3-gradient"></div>
+            </div>
+
+            <div class="chart-container" style="display: flex; flex-direction: column; align-items: center;">
+                <h3 class="chart-title" style="width: 100%; text-align: left;">Map 3: Financial Stress Bubble Map</h3>
+                <div id="q3-bubble"></div>
+            </div>
+        </div>
+
     </div>
 
     <div class="tooltip"></div>
 
+    <!-- Original Scripts -->
     <script src="heatmap1_churn.js"></script>
     <script src="heatmap2_homeowner.js"></script>
     <script src="heatmap3_credit.js"></script>
     <script src="heatmap4_homevalue.js"></script>
+
+    <!-- Q3 Requirements -->
+    <script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
+    <script src="https://unpkg.com/topojson@3"></script>
+
+    <!-- Q3 Data Loaders (Fixes CORS/Loading issues) -->
+    <script src="q3_data_loader.js"></script>
+    <script src="q3_map_data.js"></script>
+
+    <!-- Q3 Scripts -->
+    <script src="q3_hexbin.js"></script>
+    <script src="q3_gradient.js"></script>
+    <script src="q3_bubble.js"></script>
 </body>
+
 </html>
