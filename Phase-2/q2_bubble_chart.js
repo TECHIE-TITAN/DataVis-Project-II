@@ -144,13 +144,16 @@
                 
                 // Highlight bubble - bring to front
                 d3.select(this)
-                    .raise() // Bring to front
+                    .raise()
                     .transition()
                     .duration(200)
                     .attr("r", d => z(d.income) * 1.7)
                     .attr("stroke", "#fff")
                     .attr("stroke-width", 3)
                     .attr("opacity", 1);
+
+                // Cross-chart linking
+                if (window.q2ChartBus) window.q2ChartBus.highlight(d.structure);
             })
             .on("mousemove", function(event) {
                 tooltip
@@ -175,6 +178,9 @@
                     .attr("stroke", "#000")
                     .attr("stroke-width", 1.5)
                     .attr("opacity", 0.7);
+
+                // Cross-chart reset
+                if (window.q2ChartBus) window.q2ChartBus.reset();
             })
             .on("click", function(event, d) {
                 // Click functionality - show alert with data
@@ -238,6 +244,8 @@
                             .attr("opacity", 0.15);
                     }
                 });
+
+                if (window.q2ChartBus) window.q2ChartBus.highlight(category);
             })
             .on("mouseout", function() {
                 // Reset all
@@ -247,6 +255,8 @@
                     .attr("opacity", 0.7)
                     .attr("stroke-width", 1.5)
                     .attr("stroke", "#000");
+
+                if (window.q2ChartBus) window.q2ChartBus.reset();
             });
     });
 
@@ -268,5 +278,67 @@
         .style("fill", "#b0b0b0")
         .style("font-size", "10px")
         .text("= Average Income");
+
+    // Cross-chart event bus listener
+    window._q2BubbleChartHighlight = function(struct) {
+        if (!struct) {
+            svg.selectAll("circle[class^='bubble-']")
+                .transition().duration(300)
+                .attr("opacity", 0.7).attr("stroke", "#000").attr("stroke-width", 1.5);
+        } else {
+            categories.forEach(cat => {
+                if (cat === struct) {
+                    svg.selectAll(`.bubble-${cat.replace(/[^a-zA-Z0-9]/g, '')}`)
+                        .transition().duration(200)
+                        .attr("opacity", 1).attr("stroke", "#fff").attr("stroke-width", 2.5);
+                } else {
+                    svg.selectAll(`.bubble-${cat.replace(/[^a-zA-Z0-9]/g, '')}`)
+                        .transition().duration(200).attr("opacity", 0.12);
+                }
+            });
+        }
+    };
+
+    // Filter to show only selected family structures
+    window._q2BubbleChartFilter = function(structures) {
+        if (!structures) {
+            svg.selectAll("circle[class^='bubble-']")
+                .transition().duration(300).attr("opacity", 0.7);
+        } else {
+            categories.forEach(cat => {
+                const shouldShow = structures.includes(cat);
+                svg.selectAll(`.bubble-${cat.replace(/[^a-zA-Z0-9]/g, '')}`)
+                    .transition().duration(200)
+                    .attr("opacity", shouldShow ? 0.8 : 0.1);
+            });
+        }
+    };
+    
+    // Highlight age range
+    window._q2BubbleChartAgeRange = function(fromAge, toAge) {
+        if (!fromAge || !toAge) {
+            svg.selectAll("circle[class^='bubble-']")
+                .transition().duration(300).attr("stroke-width", 1.5);
+            svg.selectAll("circle[class^='bubble-']")
+                .style("filter", "none");
+        } else {
+            // Map age strings to approximate numeric ranges for filtering
+            const ageMap = {"18-25": [18, 25], "26-35": [26, 35], "36-45": [36, 45], 
+                           "46-55": [46, 55], "56-65": [56, 65], "65+": [65, 120]};
+            const [minFrom, maxFrom] = ageMap[fromAge] || [0, 150];
+            const [minTo, maxTo] = ageMap[toAge] || [0, 150];
+            const minAge = Math.min(minFrom, minTo);
+            const maxAge = Math.max(maxFrom, maxTo);
+            
+            svg.selectAll("circle[class^='bubble-']").each(function(d) {
+                const age = d.age_in_years;
+                const inRange = age >= minAge && age <= maxAge;
+                d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke-width", inRange ? 3 : 1.5)
+                    .style("filter", inRange ? "drop-shadow(0 0 6px #FFEA00)" : "none");
+            });
+        }
+    };
 
 })();

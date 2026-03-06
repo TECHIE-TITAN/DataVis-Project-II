@@ -123,32 +123,36 @@
         .on("mouseover", function(event, d) {
             const structure = d3.select(this.parentNode).datum().key;
             const percentage = d[1] - d[0];
-            
+            const total = d.data.total_churners;
+            const absCount = Math.round(total * percentage / 100);
+
             // Show tooltip
             tooltip
                 .style("display", "block")
                 .transition()
                 .duration(200)
                 .style("opacity", 1);
-            
+
             tooltip.html(`
                 <div style="border-bottom: 1px solid #555; margin-bottom: 8px; padding-bottom: 6px;">
                     <strong style="color:${colorScale(structure)}; font-size: 14px;">${structure}</strong>
                 </div>
                 <div style="margin: 4px 0;"><strong>Tenure:</strong> ${d.data.tenure_group}</div>
-                <div style="margin: 4px 0;"><strong>Percentage:</strong> ${percentage.toFixed(1)}%</div>
-                <div style="margin: 4px 0; font-size: 11px; color: #aaa;">Of all churners in this tenure group</div>
+                <div style="margin: 4px 0;"><strong>Share:</strong> ${percentage.toFixed(1)}% of churners</div>
+                <div style="margin: 4px 0;"><strong>Absolute Count:</strong> <span style="color:#FFEA00; font-size:14px; font-weight:700">${absCount.toLocaleString()}</span> churners</div>
+                <div style="margin: 4px 0;"><strong>Total in group:</strong> ${total.toLocaleString()} churners</div>
+                <div style="margin: 4px 0; font-size: 11px; color: #aaa;">n = ${absCount.toLocaleString()} — sample context matters</div>
             `)
             .style("left", (event.pageX + 15) + "px")
             .style("top", (event.pageY - 80) + "px");
-            
+
             // Highlight segment
             d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("opacity", 1)
-                .attr("stroke", "#fff")
-                .attr("stroke-width", 2);
+                .transition().duration(200)
+                .attr("opacity", 1).attr("stroke", "#fff").attr("stroke-width", 2);
+
+            // Cross-chart linking
+            if (window.q2ChartBus) window.q2ChartBus.highlight(structure);
         })
         .on("mousemove", function(event) {
             tooltip
@@ -158,28 +162,29 @@
         .on("mouseout", function() {
             // Hide tooltip
             tooltip
-                .transition()
-                .duration(300)
-                .style("opacity", 0)
-                .on("end", function() {
-                    tooltip.style("display", "none");
-                });
-            
+                .transition().duration(300).style("opacity", 0)
+                .on("end", function() { tooltip.style("display", "none"); });
+
             // Reset segment
             d3.select(this)
-                .transition()
-                .duration(200)
-                .attr("opacity", 0.9)
-                .attr("stroke", "#000")
-                .attr("stroke-width", 1);
-        })
-        .on("click", function(event, d) {
-            const structure = d3.select(this.parentNode).datum().key;
-            const percentage = d[1] - d[0];
-            event.stopPropagation();
-            alert(`${structure}\nTenure: ${d.data.tenure_group}\nPercentage: ${percentage.toFixed(1)}%`);
+                .transition().duration(200)
+                .attr("opacity", 0.9).attr("stroke", "#000").attr("stroke-width", 1);
+
+            if (window.q2ChartBus) window.q2ChartBus.reset();
         })
         .attr("opacity", 0.9);
+
+    // Add total count labels above each bar
+    q2StackedData.forEach(d => {
+        svg.append("text")
+            .attr("x", x(d.tenure_group) + x.bandwidth() / 2)
+            .attr("y", y(100) - 6)
+            .attr("text-anchor", "middle")
+            .style("fill", "#cccccc")
+            .style("font-size", "11px")
+            .style("font-weight", "600")
+            .text(`n=${d.total_churners.toLocaleString()}`);
+    });
 
     // Legend
     const legend = svg.append("g")
@@ -197,80 +202,131 @@
         const legendRow = legend.append("g")
             .attr("transform", `translate(0, ${i * 28 + 15})`)
             .style("cursor", "pointer");
-        
+
         legendRow.append("rect")
-            .attr("width", 18)
-            .attr("height", 18)
-            .attr("fill", colorScale(structure))
-            .attr("opacity", 0.9)
-            .attr("stroke", "#000")
-            .attr("stroke-width", 1);
-        
+            .attr("width", 18).attr("height", 18)
+            .attr("fill", colorScale(structure)).attr("opacity", 0.9)
+            .attr("stroke", "#000").attr("stroke-width", 1);
+
         legendRow.append("text")
-            .attr("x", 25)
-            .attr("y", 13)
-            .style("fill", "#e0e0e0")
-            .style("font-size", "12px")
+            .attr("x", 25).attr("y", 13)
+            .style("fill", "#e0e0e0").style("font-size", "12px")
             .text(structure);
-        
+
         // Legend hover effect
         legendRow
             .on("mouseover", function() {
-                // Highlight all segments of this structure
                 svg.selectAll(`.layer-${structure.replace(/[^a-zA-Z0-9]/g, '')} rect`)
-                    .transition()
-                    .duration(200)
-                    .attr("opacity", 1)
-                    .attr("stroke", "#fff")
-                    .attr("stroke-width", 2);
-                
-                // Dim others
+                    .transition().duration(200)
+                    .attr("opacity", 1).attr("stroke", "#fff").attr("stroke-width", 2);
+
                 structures.forEach(otherStruct => {
                     if (otherStruct !== structure) {
                         svg.selectAll(`.layer-${otherStruct.replace(/[^a-zA-Z0-9]/g, '')} rect`)
-                            .transition()
-                            .duration(200)
-                            .attr("opacity", 0.2);
+                            .transition().duration(200).attr("opacity", 0.2);
                     }
                 });
+
+                if (window.q2ChartBus) window.q2ChartBus.highlight(structure);
             })
             .on("mouseout", function() {
-                // Reset all
                 svg.selectAll("rect")
-                    .transition()
-                    .duration(200)
-                    .attr("opacity", 0.9)
-                    .attr("stroke", "#000")
-                    .attr("stroke-width", 1);
+                    .transition().duration(200)
+                    .attr("opacity", 0.9).attr("stroke", "#000").attr("stroke-width", 1);
+
+                if (window.q2ChartBus) window.q2ChartBus.reset();
             });
     });
 
     // Add explanatory note
     const note = legend.append("g")
         .attr("transform", `translate(0, ${structures.length * 28 + 40})`);
-    
+
     note.append("text")
-        .attr("x", 0)
-        .attr("y", 0)
-        .style("fill", "#999")
-        .style("font-size", "10px")
-        .style("font-style", "italic")
+        .attr("x", 0).attr("y", 0)
+        .style("fill", "#999").style("font-size", "10px").style("font-style", "italic")
         .text("Each bar = 100%");
-    
+
     note.append("text")
-        .attr("x", 0)
-        .attr("y", 15)
-        .style("fill", "#999")
-        .style("font-size", "10px")
-        .style("font-style", "italic")
+        .attr("x", 0).attr("y", 15)
+        .style("fill", "#999").style("font-size", "10px").style("font-style", "italic")
         .text("of churners in that");
-    
+
     note.append("text")
-        .attr("x", 0)
-        .attr("y", 30)
-        .style("fill", "#999")
-        .style("font-size", "10px")
-        .style("font-style", "italic")
+        .attr("x", 0).attr("y", 30)
+        .style("fill", "#999").style("font-size", "10px").style("font-style", "italic")
         .text("tenure group");
+
+    note.append("text")
+        .attr("x", 0).attr("y", 52)
+        .style("fill", "#FFEA00").style("font-size", "10px").style("font-style", "italic")
+        .text("n=# above each bar");
+
+    // Cross-chart event bus listener
+    window._q2StackedChartHighlight = function(struct) {
+        if (!struct) {
+            svg.selectAll("rect")
+                .transition().duration(300)
+                .attr("opacity", 0.9).attr("stroke", "#000").attr("stroke-width", 1);
+        } else {
+            structures.forEach(s => {
+                if (s === struct) {
+                    svg.selectAll(`.layer-${s.replace(/[^a-zA-Z0-9]/g, '')} rect`)
+                        .transition().duration(200)
+                        .attr("opacity", 1).attr("stroke", "#fff").attr("stroke-width", 2);
+                } else {
+                    svg.selectAll(`.layer-${s.replace(/[^a-zA-Z0-9]/g, '')} rect`)
+                        .transition().duration(200).attr("opacity", 0.15);
+                }
+            });
+        }
+    };
+    
+    // Filter to show only selected family structures
+    window._q2StackedChartFilter = function(structures) {
+        if (!structures) {
+            svg.selectAll("rect")
+                .transition().duration(300).attr("opacity", 0.9);
+        } else {
+            const allStructures = ["Single-NoKids", "Single-Kids", "Married-NoKids", "Married-Kids"];
+            allStructures.forEach(struct => {
+                const shouldShow = structures.includes(struct);
+                svg.selectAll(`.layer-${struct.replace(/[^a-zA-Z0-9]/g, '')} rect`)
+                    .transition().duration(200)
+                    .attr("opacity", shouldShow ? 0.9 : 0.1);
+            });
+        }
+    };
+    
+    // Highlight tenure/age range
+    window._q2StackedChartAgeRange = function(fromAge, toAge) {
+        if (!fromAge || !toAge) {
+            svg.selectAll("rect")
+                .transition().duration(300).attr("stroke-width", 1);
+            svg.selectAll("rect").style("filter", "none");
+        } else {
+            // Map age ranges to tenure groups
+            const ageToTenure = {
+                "18-25": ["0-1 yr"],
+                "26-35": ["1-2 yrs", "2-3 yrs"],
+                "36-45": ["3-4 yrs", "4-5 yrs"],
+                "46-55": ["5-6 yrs", "6-7 yrs"],
+                "56-65": ["7-8 yrs", "8-9 yrs"],
+                "65+": ["9+ yrs"]
+            };
+            
+            const relevantTenures = new Set();
+            if (ageToTenure[fromAge]) ageToTenure[fromAge].forEach(t => relevantTenures.add(t));
+            if (ageToTenure[toAge]) ageToTenure[toAge].forEach(t => relevantTenures.add(t));
+            
+            svg.selectAll("rect").each(function(d) {
+                const inRange = relevantTenures.has(d.data.tenure_group);
+                d3.select(this)
+                    .transition().duration(200)
+                    .attr("stroke-width", inRange ? 2.5 : 1)
+                    .style("filter", inRange ? "drop-shadow(0 0 4px #FFEA00)" : "none");
+            });
+        }
+    };
 
 })();
