@@ -169,6 +169,46 @@
         .grid path {
             stroke-width: 0;
         }
+
+        /* Q3 Map enhancements */
+        .q3-legend {
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .q3-category-legend div[data-category] {
+            transition: all 0.2s ease;
+        }
+
+        .q3-category-legend div[data-category]:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .q3-category-legend div[data-category].active {
+            background: rgba(255,255,255,0.1);
+            border-color: #aaa !important;
+        }
+
+        .q3-synced-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1600px;
+            margin: 20px auto 0;
+        }
+
+        .q3-sync-indicator {
+            text-align: center;
+            margin: 10px auto;
+            color: #888;
+            font-size: 12px;
+            font-style: italic;
+        }
+
+        @media (max-width: 1200px) {
+            .q3-synced-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -239,14 +279,17 @@
                 after accounting for customer tenure, financial status, and residential stability?</h3>
         </div>
 
-        <!-- Vertical Layout for Q3 -->
+        <!-- Q3: Map 1 full-width -->
         <div class="dashboard-grid" style="grid-template-columns: 1fr; gap: 40px; max-width: 1000px; margin: 0 auto;">
             <div class="chart-container" style="display: flex; flex-direction: column; align-items: center;">
-                <h3 class="chart-title" style="width: 100%; text-align: left;">Map 1: Spatial Churn Hotspot (Hexbin)
-                </h3>
+                <h3 class="chart-title" style="width: 100%; text-align: left;">Map 1: Spatial Churn Hotspot (Hexbin)</h3>
                 <div id="q3-hexbin"></div>
             </div>
+        </div>
 
+        <!-- Q3: Maps 2 & 3 side-by-side (synced) -->
+        <div class="q3-sync-indicator">🔗 Maps 2 & 3 are synced — click a stress level in Map 3 to highlight those customers in Map 2</div>
+        <div class="q3-synced-grid">
             <div class="chart-container" style="display: flex; flex-direction: column; align-items: center;">
                 <h3 class="chart-title" style="width: 100%; text-align: left;">Map 2: Tenure-Churn Gradient</h3>
                 <div id="q3-gradient"></div>
@@ -277,6 +320,9 @@
     <!-- Q3 Data Loaders (Fixes CORS/Loading issues) -->
     <script src="q3_data_loader.js"></script>
     <script src="q3_map_data.js"></script>
+
+    <!-- Q3 Shared Infrastructure (event bus, legends, county loader) -->
+    <script src="q3_shared.js"></script>
 
     <!-- Q3 Scripts -->
     <script src="q3_hexbin.js"></script>
