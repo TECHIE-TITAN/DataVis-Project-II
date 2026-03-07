@@ -13,43 +13,15 @@
     
     const tooltip = d3.select('.tooltip');
     
-    const sampleData = [
-        {tenure: '0-1yr', income: '<25K', value: 0.40, count: 120},
-        {tenure: '1-2yr', income: '<25K', value: 0.45, count: 150},
-        {tenure: '2-4yr', income: '<25K', value: 0.50, count: 180},
-        {tenure: '4-8yr', income: '<25K', value: 0.55, count: 200},
-        {tenure: '8+yr', income: '<25K', value: 0.60, count: 250},
-        
-        {tenure: '0-1yr', income: '25-50K', value: 0.50, count: 200},
-        {tenure: '1-2yr', income: '25-50K', value: 0.55, count: 250},
-        {tenure: '2-4yr', income: '25-50K', value: 0.60, count: 300},
-        {tenure: '4-8yr', income: '25-50K', value: 0.65, count: 350},
-        {tenure: '8+yr', income: '25-50K', value: 0.70, count: 400},
-        
-        {tenure: '0-1yr', income: '50-75K', value: 0.65, count: 300},
-        {tenure: '1-2yr', income: '50-75K', value: 0.70, count: 350},
-        {tenure: '2-4yr', income: '50-75K', value: 0.73, count: 400},
-        {tenure: '4-8yr', income: '50-75K', value: 0.76, count: 450},
-        {tenure: '8+yr', income: '50-75K', value: 0.80, count: 500},
-        
-        {tenure: '0-1yr', income: '75-100K', value: 0.75, count: 250},
-        {tenure: '1-2yr', income: '75-100K', value: 0.78, count: 300},
-        {tenure: '2-4yr', income: '75-100K', value: 0.82, count: 350},
-        {tenure: '4-8yr', income: '75-100K', value: 0.85, count: 400},
-        {tenure: '8+yr', income: '75-100K', value: 0.88, count: 450},
-        
-        {tenure: '0-1yr', income: '100-150K', value: 0.82, count: 180},
-        {tenure: '1-2yr', income: '100-150K', value: 0.85, count: 220},
-        {tenure: '2-4yr', income: '100-150K', value: 0.88, count: 260},
-        {tenure: '4-8yr', income: '100-150K', value: 0.90, count: 300},
-        {tenure: '8+yr', income: '100-150K', value: 0.93, count: 350},
-        
-        {tenure: '0-1yr', income: '150K+', value: 0.88, count: 100},
-        {tenure: '1-2yr', income: '150K+', value: 0.90, count: 130},
-        {tenure: '2-4yr', income: '150K+', value: 0.92, count: 160},
-        {tenure: '4-8yr', income: '150K+', value: 0.94, count: 190},
-        {tenure: '8+yr', income: '150K+', value: 0.96, count: 220}
-    ];
+    // Real data from autoinsurance_churn.csv (pre-aggregated via heatmap_bus.js)
+    // Cell value = % customers with good credit (0–1 scale)
+    // Displayed as: (d.value * 100).toFixed(1) + '%'  →  e.g. 0.4267 → "42.7%"
+    const sampleData = window.heatmapData.cells.map(d => ({
+        tenure: d.tenure,
+        income: d.income,
+        value:  d.credit,
+        count:  d.count
+    }));
     
     const cellWidth = (width - margin.left - margin.right) / tenureBuckets.length;
     const cellHeight = (height - margin.top - margin.bottom) / incomeBuckets.length;
@@ -62,7 +34,7 @@
     const g = svg.append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
     
-    g.selectAll('.cell')
+    const cells = g.selectAll('.cell')
         .data(sampleData)
         .enter()
         .append('rect')
@@ -72,20 +44,27 @@
         .attr('width', cellWidth)
         .attr('height', cellHeight)
         .attr('fill', d => colorScale(d.value))
+        .attr('stroke', '#000000')
+        .attr('stroke-width', 2)
         .on('mouseover', function(event, d) {
-            tooltip.style('opacity', 1)
-                .style('left', (event.pageX + 15) + 'px')
-                .style('top', (event.pageY - 15) + 'px')
-                .html(`
-                    <div><strong>Tenure:</strong> ${d.tenure}</div>
-                    <div><strong>Income:</strong> ${d.income}</div>
-                    <div><strong>Good Credit:</strong> ${(d.value * 100).toFixed(1)}%</div>
-                    <div style="color: #888; font-size: 11px; margin-top: 5px;">Count: ${d.count}</div>
-                `);
+            window.heatmapBus.highlight(`${d.tenure}|${d.income}`, event);
+        })
+        .on('mousemove', function(event) {
+            d3.select('.tooltip')
+                .style('left', (event.pageX + 18) + 'px')
+                .style('top', (event.pageY - 18) + 'px');
         })
         .on('mouseout', function() {
-            tooltip.style('opacity', 0);
+            window.heatmapBus.reset();
         });
+
+    window.heatmapBus.register(
+        'credit',
+        cells,
+        sampleData,
+        d => (d.value * 100).toFixed(1) + '%'
+    );
+    window.heatmapBus.registries['credit'].label = '💳 Good Credit';
     
     g.selectAll('.label')
         .data(sampleData)

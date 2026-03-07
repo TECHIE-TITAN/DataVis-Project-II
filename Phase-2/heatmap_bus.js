@@ -1,0 +1,76 @@
+// ─── Real aggregated data from autoinsurance_churn.csv ───────────────────────
+// Pre-computed with Python: 1,680,909 rows → 30 cells (5 tenure × 6 income).
+// Fields per cell:
+//   churn     – churn rate            (0–1, avg of Churn column)
+//   homeowner – home-ownership rate   (0–1, avg of home_owner column)
+//   credit    – good-credit rate      (0–1, avg of good_credit column)
+//   homevalue – avg home market value (dollars, midpoint of range bucket)
+//   count     – number of customers in this cell
+window.heatmapData = {"cells":[{"tenure":"0-1yr","income":"<25K","churn":0.3999,"homeowner":0.6722,"credit":0.4267,"homevalue":95395,"count":20743},{"tenure":"0-1yr","income":"25-50K","churn":0.3941,"homeowner":0.7469,"credit":0.7702,"homevalue":103812,"count":46576},{"tenure":"0-1yr","income":"50-75K","churn":0.3822,"homeowner":0.8226,"credit":0.8889,"homevalue":121790,"count":61886},{"tenure":"0-1yr","income":"75-100K","churn":0.3861,"homeowner":0.8176,"credit":0.8964,"homevalue":139765,"count":53529},{"tenure":"0-1yr","income":"100-150K","churn":0.3657,"homeowner":0.9078,"credit":0.9413,"homevalue":160724,"count":35066},{"tenure":"0-1yr","income":"150K+","churn":0.3509,"homeowner":0.9365,"credit":0.9671,"homevalue":201973,"count":18817},{"tenure":"1-2yr","income":"<25K","churn":0.1538,"homeowner":0.639,"credit":0.4727,"homevalue":95971,"count":5579},{"tenure":"1-2yr","income":"25-50K","churn":0.116,"homeowner":0.7091,"credit":0.7992,"homevalue":108956,"count":11480},{"tenure":"1-2yr","income":"50-75K","churn":0.0908,"homeowner":0.7835,"credit":0.8866,"homevalue":121388,"count":12649},{"tenure":"1-2yr","income":"75-100K","churn":0.0886,"homeowner":0.7382,"credit":0.8796,"homevalue":136564,"count":10072},{"tenure":"1-2yr","income":"100-150K","churn":0.0993,"homeowner":0.8869,"credit":0.9336,"homevalue":157942,"count":5147},{"tenure":"1-2yr","income":"150K+","churn":0.1098,"homeowner":0.9222,"credit":0.9516,"homevalue":211159,"count":2623},{"tenure":"2-4yr","income":"<25K","churn":0.0784,"homeowner":0.605,"credit":0.3995,"homevalue":97601,"count":12233},{"tenure":"2-4yr","income":"25-50K","churn":0.0728,"homeowner":0.699,"credit":0.7626,"homevalue":105729,"count":29828},{"tenure":"2-4yr","income":"50-75K","churn":0.0709,"homeowner":0.7948,"credit":0.8874,"homevalue":123010,"count":40911},{"tenure":"2-4yr","income":"75-100K","churn":0.0692,"homeowner":0.7778,"credit":0.8813,"homevalue":140508,"count":35436},{"tenure":"2-4yr","income":"100-150K","churn":0.0692,"homeowner":0.8896,"credit":0.9355,"homevalue":161671,"count":20636},{"tenure":"2-4yr","income":"150K+","churn":0.0724,"homeowner":0.9208,"credit":0.9613,"homevalue":204898,"count":9868},{"tenure":"4-8yr","income":"<25K","churn":0.0696,"homeowner":0.6567,"credit":0.4276,"homevalue":96189,"count":25295},{"tenure":"4-8yr","income":"25-50K","churn":0.0709,"homeowner":0.735,"credit":0.7698,"homevalue":105213,"count":57883},{"tenure":"4-8yr","income":"50-75K","churn":0.0705,"homeowner":0.816,"credit":0.8872,"homevalue":121812,"count":76716},{"tenure":"4-8yr","income":"75-100K","churn":0.0705,"homeowner":0.8044,"credit":0.8928,"homevalue":140025,"count":65623},{"tenure":"4-8yr","income":"100-150K","churn":0.0682,"homeowner":0.9039,"credit":0.9381,"homevalue":159129,"count":42517},{"tenure":"4-8yr","income":"150K+","churn":0.0701,"homeowner":0.9343,"credit":0.9639,"homevalue":202723,"count":22329},{"tenure":"8+yr","income":"<25K","churn":0.0689,"homeowner":0.7063,"credit":0.4483,"homevalue":95570,"count":87694},{"tenure":"8+yr","income":"25-50K","churn":0.0702,"homeowner":0.7746,"credit":0.7771,"homevalue":104306,"count":188906},{"tenure":"8+yr","income":"50-75K","churn":0.0701,"homeowner":0.8405,"credit":0.8914,"homevalue":121517,"count":247722},{"tenure":"8+yr","income":"75-100K","churn":0.0701,"homeowner":0.8406,"credit":0.9015,"homevalue":139602,"count":210191},{"tenure":"8+yr","income":"100-150K","churn":0.0705,"homeowner":0.9186,"credit":0.9432,"homevalue":159256,"count":144694},{"tenure":"8+yr","income":"150K+","churn":0.0695,"homeowner":0.9446,"credit":0.9672,"homevalue":203369,"count":72148}]};
+
+// ─── Shared event bus for linked hovering across all 4 heatmaps ───────────────
+window.heatmapBus = {
+    // Stores lookup maps: { "tenure|income" -> dataPoint } for each heatmap
+    registries: {},
+
+    // Register a heatmap's cells with the bus
+    // id:       unique string e.g. 'churn', 'homeowner', 'credit', 'homevalue'
+    // cells:    D3 selection of all rect.heatmap-cell in this heatmap
+    // data:     the flat sampleData array used to draw the heatmap
+    // fmtFn:    function(d) -> formatted string for combined tooltip
+    register(id, cells, data, fmtFn) {
+        const map = {};
+        data.forEach(d => { map[`${d.tenure}|${d.income}`] = d; });
+        this.registries[id] = { cells, data, fmtFn, map };
+    },
+
+    // Called on mouseover — key is "tenure|income"
+    highlight(key, event) {
+        // Dim everything, then highlight the matching cell in each heatmap
+        Object.values(this.registries).forEach(({ cells }) => {
+            cells
+                .attr('opacity', d => `${d.tenure}|${d.income}` === key ? 1.0 : 0.25)
+                .attr('stroke', d => `${d.tenure}|${d.income}` === key ? '#ffffff' : '#000000')
+                .attr('stroke-width', d => `${d.tenure}|${d.income}` === key ? 3 : 2);
+        });
+
+        // Build combined tooltip
+        const [tenure, income] = key.split('|');
+        let rows = `
+            <div style="font-size:12px; color:#aaa; margin-bottom:8px; letter-spacing:1px;">
+                TENURE: <strong style="color:#fff">${tenure}</strong>
+                &nbsp;|&nbsp;
+                INCOME: <strong style="color:#fff">${income}</strong>
+            </div>
+            <table style="border-collapse:collapse; width:100%">`;
+
+        Object.entries(this.registries).forEach(([id, { map, fmtFn, label }]) => {
+            const d = map[key];
+            if (d) {
+                rows += `
+                <tr>
+                    <td style="color:#aaa; font-size:11px; padding:3px 8px 3px 0">${label}</td>
+                    <td style="color:#fff; font-size:13px; font-weight:600; padding:3px 0">${fmtFn(d)}</td>
+                </tr>`;
+            }
+        });
+        rows += `</table>`;
+
+        d3.select('.tooltip')
+            .style('opacity', 1)
+            .style('left', (event.pageX + 18) + 'px')
+            .style('top', (event.pageY - 18) + 'px')
+            .html(rows);
+    },
+
+    // Called on mouseout
+    reset() {
+        Object.values(this.registries).forEach(({ cells }) => {
+            cells
+                .attr('opacity', 1)
+                .attr('stroke', '#000000')
+                .attr('stroke-width', 2);
+        });
+        d3.select('.tooltip').style('opacity', 0);
+    }
+};

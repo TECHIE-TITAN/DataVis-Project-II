@@ -204,6 +204,16 @@
             font-style: italic;
         }
 
+        .q1-sync-indicator {
+            text-align: center;
+            margin: 8px auto 0;
+            color: #ffd700;
+            font-size: 12px;
+            font-style: italic;
+            opacity: 0.75;
+            letter-spacing: 0.3px;
+        }
+
         @media (max-width: 1200px) {
             .q3-synced-grid {
                 grid-template-columns: 1fr;
@@ -222,6 +232,7 @@
         <div class="question-section">
             <h3>Question-1: Among the churned customers, was the reason for churning financial instability, low loyalty
                 or simply loss of interest?</h3>
+            <div class="q1-sync-indicator">⬡ Linked Hover Active — hover any cell to cross-highlight all 4 heatmaps</div>
         </div>
 
         <div class="dashboard-grid">
@@ -340,6 +351,9 @@
     </div>
 
     <div class="tooltip"></div>
+
+    <!-- Q1 Shared event bus — must load before all heatmap scripts -->
+    <script src="heatmap_bus.js"></script>
 
     <!-- Original Scripts -->
     <script src="heatmap1_churn.js"></script>
