@@ -25,13 +25,9 @@
     const data = q3Data;
 
     data.forEach(d => {
-        d.latitude  = +d.latitude;
+        d.latitude = +d.latitude;
         d.longitude = +d.longitude;
-        // Aggregated field: churn_rate replaces per-row Churn
-        d.churn_rate = +d.churn_rate;
-        d.avg_days_tenure = +d.avg_days_tenure;
-        d.financial_stability_index = +d.financial_stability_index;
-        d.count = +d.count;
+        d.Churn = +d.Churn;
     });
 
     const pointsGeoJSON = {
@@ -77,7 +73,7 @@
         ['#64acbe', '#627f8c', '#574249']
     ];
 
-    const maxCount = d3.max(bins, d => d3.sum(d, p => p.count)) || 1;
+    const maxCount = d3.max(bins, d => d.length) || 1;
 
     // Quantize into 3 bins (0, 1, 2)
     function getChurnBin(churnRate) {
@@ -106,13 +102,12 @@
         .enter().append('path')
         .attr('d', d => hexbin.hexagon(hexbin.radius())) // Uniform size!
         .attr('transform', d => `translate(${d.x},${d.y})`)
-        .attr('fill', d => getBivariateColor(d3.mean(d, p => p.churn_rate), d3.sum(d, p => p.count)))
+        .attr('fill', d => getBivariateColor(d3.mean(d, p => p.Churn), d.length))
         .attr('stroke', '#222')
         .attr('stroke-width', '0.5px')
         .attr('opacity', 0.85)
         .on('mouseover', function (event, d) {
-            const churnRate = d3.mean(d, p => p.churn_rate);
-            const totalCustomers = d3.sum(d, p => p.count);
+            const churnRate = d3.mean(d, p => p.Churn);
             const cities = [...new Set(d.map(p => p.city))];
             const locationText = cities.length <= 3
                 ? cities.join(', ')
@@ -146,10 +141,10 @@
                      <div style="background: rgba(0,0,0,0.95); padding: 8px; border-radius: 5px; color: white;">
                          ${miniMapSVG}
                          <div style="margin-top: 5px;"><strong>Location:</strong> ${locationText}</div>
-                         <div>Customers: ${totalCustomers.toLocaleString()}</div>
+                         <div>Customers: ${d.length}</div>
                          <div>Churn Rate: ${(churnRate * 100).toFixed(1)}%</div>
-                         <div style="margin-top: 4px; padding: 3px 6px; border-radius: 3px; background: ${getBivariateColor(churnRate, totalCustomers)}; display: inline-block;">
-                             ${getCountBin(totalCustomers) === 0 ? 'Low' : getCountBin(totalCustomers) === 1 ? 'Mid' : 'High'} Count, 
+                         <div style="margin-top: 4px; padding: 3px 6px; border-radius: 3px; background: ${getBivariateColor(churnRate, d.length)}; display: inline-block;">
+                             ${getCountBin(d.length) === 0 ? 'Low' : getCountBin(d.length) === 1 ? 'Mid' : 'High'} Count, 
                              ${getChurnBin(churnRate) === 0 ? 'Low' : getChurnBin(churnRate) === 1 ? 'Mid' : 'High'} Churn
                          </div>
                      </div>
