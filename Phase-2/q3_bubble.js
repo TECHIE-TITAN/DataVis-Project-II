@@ -35,9 +35,11 @@
 
     data.forEach((d, i) => {
         d.financial_stability_index = +d.financial_stability_index;
-        d.Churn = +d.Churn;
-        d.latitude = +d.latitude;
+        d.churn_rate = +d.churn_rate;
+        d.avg_days_tenure = +d.avg_days_tenure;
+        d.latitude  = +d.latitude;
         d.longitude = +d.longitude;
+        d.count = +d.count;
         d._idx = i;
     });
 
@@ -69,14 +71,14 @@
     const bubblesG = svg.append('g').attr('class', 'bubbles-layer');
 
     const bubbles = bubblesG.selectAll('circle')
-        .data(data.sort((a, b) => a.Churn - b.Churn))
+        .data(data.sort((a, b) => a.churn_rate - b.churn_rate))
         .enter()
         .append('circle')
         .attr('cx', d => projection([d.longitude, d.latitude])[0])
         .attr('cy', d => projection([d.longitude, d.latitude])[1])
-        .attr('r', d => d.Churn ? 6 : 3)
+        .attr('r', d => 3 + Math.sqrt(d.count / 5000) + (d.churn_rate > 0.15 ? 3 : 0))
         .attr('fill', d => color(d.financial_stability_index))
-        .attr('stroke', d => d.Churn ? '#fff' : 'none')
+        .attr('stroke', d => d.churn_rate > 0.15 ? '#fff' : 'none')
         .attr('stroke-width', 1)
         .attr('opacity', 0.8)
         .on('mouseover', function (event, d) {
@@ -88,7 +90,7 @@
             const miniPath = d3.geoPath().projection(miniProj);
             const texasPathData = miniPath(texas);
             const dotPos = miniProj([+d.longitude, +d.latitude]);
-            const dotColor = d.Churn ? '#ff4444' : '#44ff44';
+            const dotColor = d.churn_rate > 0.15 ? '#ff4444' : '#44ff44';
 
             const miniMapSVG = `
                 <svg width="${miniWidth}" height="${miniHeight}" style="display: block; margin: 5px auto;">
@@ -104,10 +106,11 @@
                 .html(`
                     <div style="background: rgba(0,0,0,0.95); padding: 8px; border-radius: 5px; color: white;">
                         ${miniMapSVG}
-                        <div style="margin-top: 5px;"><strong>${d.city}</strong></div>
+                        <div style="margin-top: 5px;"><strong>${d.city}</strong>, ${d.county} County</div>
+                        <div>Customers: ${d.count.toLocaleString()}</div>
                         <div>Stability Index: ${d.financial_stability_index.toFixed(2)}</div>
                         <div>Stress Level: ${getStressLevel(d.financial_stability_index).replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</div>
-                        <div>Churn: ${d.Churn ? 'Yes' : 'No'}</div>
+                        <div>Churn Rate: ${(d.churn_rate * 100).toFixed(1)}%</div>
                     </div>
                 `);
         })
@@ -158,7 +161,7 @@
             if (t.k >= zoomThreshold) {
                 hexbinG.style('display', 'none');
                 bubblesG.style('display', null);
-                bubbles.attr('r', d => (d.Churn ? 6 : 3) / t.k)
+                bubbles.attr('r', d => (3 + Math.sqrt(d.count / 5000) + (d.churn_rate > 0.15 ? 3 : 0)) / t.k)
                     .attr('stroke-width', 1 / t.k);
             } else {
                 hexbinG.style('display', null);
@@ -231,14 +234,14 @@
         .text('Churn Status');
 
     const szSvg = sizeLegend.append('svg').attr('width', 150).attr('height', 30);
-    szSvg.append('circle').attr('cx', 20).attr('cy', 15).attr('r', 3)
+    szSvg.append('circle').attr('cx', 20).attr('cy', 15).attr('r', 4)
         .attr('fill', '#66bb66').attr('opacity', 0.8);
     szSvg.append('text').attr('x', 28).attr('y', 18).attr('fill', '#aaa')
-        .attr('font-size', '9px').text('Active');
-    szSvg.append('circle').attr('cx', 80).attr('cy', 15).attr('r', 6)
+        .attr('font-size', '9px').text('Low Churn (<15%)');
+    szSvg.append('circle').attr('cx', 90).attr('cy', 15).attr('r', 8)
         .attr('fill', '#cc4444').attr('opacity', 0.8).attr('stroke', '#fff').attr('stroke-width', 1);
-    szSvg.append('text').attr('x', 92).attr('y', 18).attr('fill', '#aaa')
-        .attr('font-size', '9px').text('Churned');
+    szSvg.append('text').attr('x', 104).attr('y', 18).attr('fill', '#aaa')
+        .attr('font-size', '9px').text('High Churn');
 
     // ---- Clickable category legend for syncing ----
     drawCategoryLegend(container, [
@@ -251,7 +254,7 @@
             if (!selectedKey) {
                 // Deselect: reset both maps
                 bubbles.attr('opacity', 0.8)
-                    .attr('stroke', d => d.Churn ? '#fff' : 'none')
+                    .attr('stroke', d => d.churn_rate > 0.15 ? '#fff' : 'none')
                     .attr('stroke-width', 1);
                 q3EventBus.emit('highlight-customers', null);
                 return;
@@ -269,7 +272,6 @@
                 .attr('opacity', d => idxSet.has(d._idx) ? 1 : 0.07)
                 .attr('stroke', d => idxSet.has(d._idx) ? '#fff' : 'none')
                 .attr('stroke-width', d => idxSet.has(d._idx) ? 2 : 0);
-
             // Hex clusters also dim
             hexbinG.selectAll('path')
                 .attr('opacity', d => {

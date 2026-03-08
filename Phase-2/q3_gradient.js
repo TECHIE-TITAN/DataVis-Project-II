@@ -34,10 +34,12 @@
 
     const data = q3Data;
     data.forEach((d, i) => {
-        d.latitude = +d.latitude;
+        d.latitude  = +d.latitude;
         d.longitude = +d.longitude;
-        d.days_tenure = +d.days_tenure;
-        d.Churn = +d.Churn;
+        d.avg_days_tenure = +d.avg_days_tenure;
+        d.churn_rate = +d.churn_rate;
+        d.financial_stability_index = +d.financial_stability_index;
+        d.count = +d.count;
         d._idx = i; // Index for syncing
     });
 
@@ -56,7 +58,7 @@
     drawTexasBase(svg, path);
 
     const tenureColor = d3.scaleSequential(d3.interpolateBlues)
-        .domain([0, d3.max(data, d => d.days_tenure)]);
+        .domain([0, d3.max(data, d => d.avg_days_tenure)]);
 
     // ---- Individual circles layer (visible at zoom) ----
     const circlesG = svg.append('g').attr('class', 'circles-layer');
@@ -67,9 +69,9 @@
         .append('circle')
         .attr('cx', d => projection([d.longitude, d.latitude])[0])
         .attr('cy', d => projection([d.longitude, d.latitude])[1])
-        .attr('r', 4)
-        .attr('fill', d => tenureColor(d.days_tenure))
-        .attr('opacity', d => 0.4 + (d.Churn * 0.5))
+        .attr('r', d => 4 + Math.sqrt(d.count / 1000))
+        .attr('fill', d => tenureColor(d.avg_days_tenure))
+        .attr('opacity', d => 0.4 + (d.churn_rate * 0.5))
         .attr('stroke', 'none')
         .attr('stroke-width', 0)
         .on('mouseover', function (event, d) {
@@ -96,9 +98,10 @@
                 .html(`
                     <div style="background: rgba(0,0,0,0.95); padding: 8px; border-radius: 5px; color: white;">
                         ${miniMapSVG}
-                        <div style="margin-top: 5px;"><strong>${d.city}</strong></div>
-                        <div>Tenure: ${d.days_tenure} days</div>
-                        <div>Churn: ${d.Churn ? 'Yes' : 'No'}</div>
+                        <div style="margin-top: 5px;"><strong>${d.city}</strong>, ${d.county} County</div>
+                        <div>Customers: ${d.count.toLocaleString()}</div>
+                        <div>Avg Tenure: ${Math.round(d.avg_days_tenure).toLocaleString()} days</div>
+                        <div>Churn Rate: ${(d.churn_rate * 100).toFixed(1)}%</div>
                     </div>
                 `);
         })
@@ -125,14 +128,14 @@
     const hexRadius = d3.scaleSqrt().domain([0, maxCount]).range([4, hexbin.radius()]);
 
     // Color for hex clusters based on avg tenure
-    const maxTenure = d3.max(data, d => d.days_tenure);
+    const maxTenure = d3.max(data, d => d.avg_days_tenure);
 
     hexbinG.selectAll('path')
         .data(bins)
         .enter().append('path')
         .attr('d', d => hexbin.hexagon(hexRadius(d.length)))
         .attr('transform', d => `translate(${d.x},${d.y})`)
-        .attr('fill', d => tenureColor(d3.mean(d, p => p.days_tenure)))
+        .attr('fill', d => tenureColor(d3.mean(d, p => p.avg_days_tenure)))
         .attr('stroke', '#333')
         .attr('stroke-width', 0.5)
         .attr('opacity', 0.8);
@@ -195,7 +198,7 @@
     q3EventBus.on('highlight-customers', (selectedIndices) => {
         if (!selectedIndices) {
             // Reset all
-            circles.attr('opacity', d => 0.4 + (d.Churn * 0.5))
+            circles.attr('opacity', d => 0.4 + (d.churn_rate * 0.5))
                 .attr('stroke', 'none')
                 .attr('stroke-width', 0)
                 .attr('r', 4);
